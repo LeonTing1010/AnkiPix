@@ -227,15 +227,19 @@ export class AnkiPixSettingsTab extends PluginSettingTab {
 		// Usage Instructions
 		containerEl.createEl('h2', { text: 'How to Use' });
 		const usageEl = containerEl.createDiv({ cls: 'ankipix-usage-instructions' });
-		usageEl.innerHTML = `
-			<ol>
-				<li><strong>Setup:</strong> Install AnkiConnect add-on in Anki and ensure Anki is running</li>
-				<li><strong>Configure API:</strong> Add your Pixabay API key above (free registration required)</li>
-				<li><strong>Select Text:</strong> Highlight any text in your notes</li>
-				<li><strong>Generate Cards:</strong> Right-click and select "Generate Anki card with image" or use the ribbon icon</li>
-				<li><strong>Review Images:</strong> Preview and select the best image before creating the card</li>
-				<li><strong>Study:</strong> Your cards will appear in Anki automatically!</li>
-			</ol>
-		`;
+		const ol = usageEl.createEl('ol');
+		const steps = [
+			{ bold: 'Setup:', text: 'Install AnkiConnect add-on in Anki and ensure Anki is running' },
+			{ bold: 'Configure API:', text: 'Add your Pixabay API key above (free registration required)' },
+			{ bold: 'Select Text:', text: 'Highlight any text in your notes' },
+			{ bold: 'Generate Cards:', text: 'Right-click and select "Generate Anki card with image" or use the ribbon icon' },
+			{ bold: 'Review Images:', text: 'Preview and select the best image before creating the card' },
+			{ bold: 'Study:', text: 'Your cards will appear in Anki automatically!' }
+		];
+		for (const step of steps) {
+			const li = ol.createEl('li');
+			li.createEl('strong', { text: step.bold });
+			li.appendText(' ' + step.text);
+		}
 	}
 }

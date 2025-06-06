@@ -1,3 +1,9 @@
+node_modules/
+.env
+.DS_Store
+*.js.map
+# Ignore everything in dist except main.js, styles.css, manifest.json
+/dist/
 # Ignore documentation and release artifacts
 /docs/
 /release/
