@@ -1,0 +1,4 @@
+# Ignore documentation and release artifacts
+/docs/
+/release/
+PROJECT_STATUS.md

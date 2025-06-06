@@ -1,0 +1,205 @@
+import { Modal, App, Setting, Notice } from 'obsidian';
+import { ImageSearchService, SearchImage } from '../services/ImageSearchService';
+import { AnkiConnectService } from '../services/AnkiConnectService';
+
+export class ImageSearchModal extends Modal {
+	private keywords: string[];
+	private imageSearchService: ImageSearchService;
+	private ankiConnectService: AnkiConnectService;
+	private settings: any;
+	private originalText: string;
+	private images: SearchImage[] = [];
+	private selectedImage: SearchImage | null = null;
+	private isSearching = false;
+	private imagesContainer: HTMLElement;
+	private createCardButton: HTMLButtonElement;
+
+	constructor(
+		app: App,
+		keywords: string[],
+		imageSearchService: ImageSearchService,
+		ankiConnectService: AnkiConnectService,
+		settings: any,
+		originalText: string
+	) {
+		super(app);
+		this.keywords = keywords;
+		this.imageSearchService = imageSearchService;
+		this.ankiConnectService = ankiConnectService;
+		this.settings = settings;
+		this.originalText = originalText;
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+		contentEl.empty();
+		
+		// Modal header
+		contentEl.createEl('h2', { text: 'Generate Anki Card with Image' });
+		
+		// Original text preview
+		const textPreview = contentEl.createDiv({ cls: 'ankipix-text-preview' });
+		textPreview.createEl('h3', { text: 'Selected Text:' });
+		textPreview.createEl('p', { text: this.originalText, cls: 'ankipix-original-text' });
+		
+		// Keywords display
+		const keywordsDiv = contentEl.createDiv({ cls: 'ankipix-keywords' });
+		keywordsDiv.createEl('h3', { text: 'Search Keywords:' });
+		const keywordsList = keywordsDiv.createEl('div', { cls: 'ankipix-keywords-list' });
+		this.keywords.forEach(keyword => {
+			keywordsList.createEl('span', { text: keyword, cls: 'ankipix-keyword-tag' });
+		});
+
+		// Search controls
+		const searchControls = contentEl.createDiv({ cls: 'ankipix-search-controls' });
+		
+		const customKeywordSetting = new Setting(searchControls)
+			.setName('Custom Search Term')
+			.setDesc('Override automatic keywords with your own search term')
+			.addText(text => {
+				text.setPlaceholder('Enter custom search term...');
+				text.inputEl.addEventListener('keypress', (e) => {
+					if (e.key === 'Enter') {
+						this.searchImages(text.getValue() || this.keywords[0]);
+					}
+				});
+			})
+			.addButton(button => {
+				button.setButtonText('Search')
+					.setCta()
+					.onClick(() => {
+						const customTerm = (customKeywordSetting.components[0] as any).inputEl.value;
+						this.searchImages(customTerm || this.keywords[0]);
+					});
+			});
+
+		// Images container
+		const imagesContainer = contentEl.createDiv({ cls: 'ankipix-images-container' });
+		
+		// Buttons container
+		const buttonsContainer = contentEl.createDiv({ cls: 'ankipix-buttons' });
+		
+		const createCardButton = buttonsContainer.createEl('button', {
+			text: 'Create Anki Card',
+			cls: 'mod-cta ankipix-create-button'
+		}) as HTMLButtonElement;
+		createCardButton.disabled = true;
+		createCardButton.addEventListener('click', () => this.createAnkiCard());
+		
+		const cancelButton = buttonsContainer.createEl('button', {
+			text: 'Cancel',
+			cls: 'ankipix-cancel-button'
+		});
+		cancelButton.addEventListener('click', () => this.close());
+
+		// Store references for later use
+		this.imagesContainer = imagesContainer;
+		this.createCardButton = createCardButton;
+
+		// Start initial search
+		this.searchImages(this.keywords[0]);
+	}
+
+	async searchImages(searchTerm: string) {
+		if (this.isSearching) return;
+		
+		this.isSearching = true;
+		this.imagesContainer.empty();
+		
+		const loadingEl = this.imagesContainer.createDiv({ cls: 'ankipix-loading' });
+		loadingEl.textContent = 'Searching for images...';
+
+		try {
+			this.images = await this.imageSearchService.searchImages(searchTerm, 9);
+			
+			this.imagesContainer.empty();
+			
+			if (this.images.length === 0) {
+				this.imagesContainer.createDiv({ 
+					cls: 'ankipix-no-results',
+					text: 'No images found. Try a different search term.' 
+				});
+				return;
+			}
+
+			// Create image grid
+			const imageGrid = this.imagesContainer.createDiv({ cls: 'ankipix-image-grid' });
+			
+			this.images.forEach((image, index) => {
+				const imageItem = imageGrid.createDiv({ cls: 'ankipix-image-item' });
+				
+				const img = imageItem.createEl('img');
+				img.src = image.thumbnail || image.url;
+				img.alt = image.tags || 'Search result';
+				
+				// Image info
+				const infoDiv = imageItem.createDiv({ cls: 'ankipix-image-info' });
+				infoDiv.createEl('div', { text: `${image.width}×${image.height}`, cls: 'ankipix-image-size' });
+				if (image.source) {
+					infoDiv.createEl('div', { text: image.source, cls: 'ankipix-image-source' });
+				}
+				
+				// Click handler
+				imageItem.addEventListener('click', () => {
+					// Remove previous selection
+					imageGrid.querySelectorAll('.ankipix-image-item').forEach(item => {
+						item.removeClass('selected');
+					});
+					
+					// Add selection to current item
+					imageItem.addClass('selected');
+					this.selectedImage = image;
+					this.createCardButton.disabled = false;
+				});
+			});
+
+		} catch (error) {
+			console.error('Image search failed:', error);
+			this.imagesContainer.empty();
+			this.imagesContainer.createDiv({ 
+				cls: 'ankipix-error',
+				text: 'Error searching for images. Please check your API configuration.' 
+			});
+			new Notice('Image search failed: ' + (error instanceof Error ? error.message : String(error)));
+		} finally {
+			this.isSearching = false;
+		}
+	}
+
+	async createAnkiCard() {
+		if (!this.selectedImage) {
+			new Notice('Please select an image first');
+			return;
+		}
+
+		try {
+			this.createCardButton.textContent = 'Creating card...';
+			this.createCardButton.disabled = true;
+
+			await this.ankiConnectService.createNote({
+				deckName: this.settings.ankiDeckName,
+				modelName: this.settings.noteType,
+				fields: {
+					[this.settings.frontField]: this.originalText,
+					[this.settings.backField]: `Image for: ${this.originalText}`,
+					[this.settings.imageField]: `<img src="${this.selectedImage.url}" alt="${this.selectedImage.tags || 'Generated image'}" style="max-width: 100%; height: auto;">`
+				},
+				tags: ['ankipix', 'auto-generated']
+			});
+
+			new Notice('Anki card created successfully!');
+			this.close();
+
+		} catch (error) {
+			console.error('Failed to create Anki card:', error);
+			new Notice('Failed to create Anki card: ' + (error instanceof Error ? error.message : String(error)));
+			this.createCardButton.textContent = 'Create Anki Card';
+			this.createCardButton.disabled = false;
+		}
+	}
+
+	onClose() {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+}

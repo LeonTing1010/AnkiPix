@@ -1,0 +1,12 @@
+{
+	"id": "ankipix",
+	"name": "AnkiPix - Smart Image for Anki Cards",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Automatically generate Anki cards with smart image search from your notes. Select text, get images, create cards instantly.",
+	"author": "AnkiPix Team",
+	"authorUrl": "https://github.com/LeonTing1010/AnkiPix",
+	"fundingUrl": "https://ko-fi.com/lt1010",
+	"isDesktopOnly": false,
+	"css": "styles.css"
+}

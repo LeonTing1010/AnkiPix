@@ -1,0 +1,141 @@
+/* AnkiPix Plugin Styles */
+
+/* Settings Tab Styles */
+.ankipix-usage-instructions {
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 16px;
+	margin-top: 10px;
+}
+
+.ankipix-usage-instructions ol {
+	margin: 0;
+	padding-left: 20px;
+}
+
+.ankipix-usage-instructions li {
+	margin-bottom: 8px;
+	line-height: 1.5;
+}
+
+/* Image Search Modal Styles */
+.ankipix-text-preview {
+	margin-bottom: 20px;
+	padding: 12px;
+	background: var(--background-secondary);
+	border-radius: 6px;
+}
+
+.ankipix-original-text {
+	font-style: italic;
+	color: var(--text-muted);
+	margin: 8px 0 0 0;
+	line-height: 1.5;
+}
+
+.ankipix-keywords {
+	margin-bottom: 20px;
+}
+
+.ankipix-keywords-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+.ankipix-keyword-tag {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	padding: 4px 8px;
+	border-radius: 12px;
+	font-size: 0.8em;
+}
+
+.ankipix-search-controls {
+	margin-bottom: 20px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	padding-bottom: 20px;
+}
+
+.ankipix-loading, 
+.ankipix-no-results, 
+.ankipix-error {
+	text-align: center;
+	padding: 40px;
+	color: var(--text-muted);
+}
+
+.ankipix-error {
+	color: var(--text-error);
+}
+
+.ankipix-image-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 12px;
+	margin-bottom: 20px;
+}
+
+.ankipix-image-item {
+	border: 2px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 8px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	background: var(--background-primary);
+}
+
+.ankipix-image-item:hover {
+	border-color: var(--interactive-accent);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.ankipix-image-item.selected {
+	border-color: var(--interactive-accent);
+	background: var(--background-secondary);
+	box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.ankipix-image-item img {
+	width: 100%;
+	height: 100px;
+	object-fit: cover;
+	border-radius: 4px;
+	margin-bottom: 8px;
+}
+
+.ankipix-image-info {
+	font-size: 0.8em;
+	color: var(--text-muted);
+}
+
+.ankipix-image-size {
+	font-weight: 500;
+}
+
+.ankipix-image-source {
+	margin-top: 2px;
+	font-style: italic;
+}
+
+.ankipix-buttons {
+	display: flex;
+	gap: 12px;
+	justify-content: flex-end;
+	margin-top: 20px;
+	padding-top: 20px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.ankipix-create-button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.ankipix-cancel-button {
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+}
