@@ -241,5 +241,14 @@ export class AnkiPixSettingsTab extends PluginSettingTab {
 			li.createEl('strong', { text: step.bold });
 			li.appendText(' ' + step.text);
 		}
+
+		// Donation link
+		const donateDiv = containerEl.createDiv({ cls: 'ankipix-donate' });
+		const donateLink = donateDiv.createEl('a', {
+			href: 'https://ko-fi.com/lt1010',
+			text: '☕ Buy Me a Coffee',
+			cls: 'ankipix-donate-link'
+		});
+		donateLink.target = '_blank';
 	}
 }

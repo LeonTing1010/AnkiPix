@@ -23,7 +23,6 @@ export class AnkiConnectService {
 			const response = await this.makeRequest('version', 6);
 			return response !== null;
 		} catch (error) {
-			console.error('AnkiConnect connection test failed:', error);
 			return false;
 		}
 	}
@@ -32,6 +31,14 @@ export class AnkiConnectService {
 		try {
 			// First, ensure the deck exists
 			await this.createDeckIfNotExists(note.deckName);
+
+			// Check if a similar note already exists to avoid duplicates
+			const frontFieldValue = note.fields[Object.keys(note.fields)[0]];
+			const existingNotes = await this.findNotes(`deck:"${note.deckName}" ${frontFieldValue}`);
+			
+			if (existingNotes && existingNotes.length > 0) {
+				throw new Error(`Card with content "${frontFieldValue}" already exists in deck "${note.deckName}"`);
+			}
 
 			// Create the note
 			const result = await this.makeRequest('addNote', 6, {
@@ -49,8 +56,17 @@ export class AnkiConnectService {
 
 			return result;
 		} catch (error) {
-			console.error('Failed to create Anki note:', error);
 			throw new Error(`Failed to create Anki note: ${error instanceof Error ? error.message : String(error)}`);
+		}
+	}
+
+	async findNotes(query: string): Promise<number[]> {
+		try {
+			return await this.makeRequest('findNotes', 6, {
+				query: query
+			});
+		} catch (error) {
+			return [];
 		}
 	}
 
@@ -66,7 +82,6 @@ export class AnkiConnectService {
 				});
 			}
 		} catch (error) {
-			console.error('Failed to create deck:', error);
 			throw new Error(`Failed to create deck: ${error instanceof Error ? error.message : String(error)}`);
 		}
 	}
@@ -75,7 +90,6 @@ export class AnkiConnectService {
 		try {
 			return await this.makeRequest('modelNames', 6);
 		} catch (error) {
-			console.error('Failed to get model names:', error);
 			return ['Basic']; // Fallback
 		}
 	}
@@ -86,7 +100,6 @@ export class AnkiConnectService {
 				modelName: modelName
 			});
 		} catch (error) {
-			console.error('Failed to get field names:', error);
 			return ['Front', 'Back']; // Fallback
 		}
 	}

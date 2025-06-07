@@ -8,6 +8,7 @@ export interface SearchImage {
 	source: string;
 	tags?: string;
 	isCC0?: boolean;
+	pixabayId?: number; // Add Pixabay-specific ID field
 }
 
 export class ImageSearchService {
@@ -48,29 +49,89 @@ export class ImageSearchService {
 
 	private async searchPixabay(keyword: string, maxResults: number): Promise<SearchImage[]> {
 		try {
-			const enhancedKeyword = this.enhanceKeyword(keyword);
-			const url = `https://pixabay.com/api/?key=${this.settings.pixabayApiKey}&q=${encodeURIComponent(enhancedKeyword)}&image_type=photo&orientation=all&category=&min_width=${this.settings.imageQuality.minResolution}&min_height=${this.settings.imageQuality.minResolution}&per_page=${maxResults}&safesearch=true`;
+			// Basic validation
+			let searchKeyword = keyword.trim();
+			if (!searchKeyword || searchKeyword.length === 0) {
+				return [];
+			}
+			
+			// Simple keyword cleaning
+			searchKeyword = searchKeyword.replace(/[^\w\s\-]/g, ' ').replace(/\s+/g, ' ').trim();
+			
+			if (!searchKeyword) {
+				return [];
+			}
+			
+			// URL encode for API
+			const q = encodeURIComponent(searchKeyword.slice(0, 100));
+			
+			// Add cache-busting to ensure unique requests
+			const timestamp = Date.now();
+			const randomSeed = Math.floor(Math.random() * 1000000);
+
+			// Build request parameters
+			const params = [
+				`key=${encodeURIComponent(this.settings.pixabayApiKey)}`,
+				`q=${q}`,
+				"image_type=photo",
+				"orientation=all",
+				`min_width=${this.settings.imageQuality.minResolution}`,
+				`min_height=${this.settings.imageQuality.minResolution}`,
+				`per_page=${Math.min(maxResults, 200)}`,
+				"safesearch=true",
+				"order=popular",
+				`_t=${timestamp}`,
+				`_r=${randomSeed}`
+			];
+			const url = `https://pixabay.com/api/?${params.join("&")}`;
 
 			const response = await requestUrl({
 				url: url,
-				method: 'GET'
+				method: 'GET',
+				headers: {
+					'Cache-Control': 'no-cache, no-store, must-revalidate',
+					'Pragma': 'no-cache',
+					'Expires': '0'
+				}
 			});
 
 			const data = response.json;
 
-			if (!data.hits) {
+			// Check for API errors
+			if (response.status !== 200) {
+				console.error(`Pixabay API Error: Status ${response.status}`);
 				return [];
 			}
 
-			return data.hits.map((hit: any) => ({
+			if (data?.error) {
+				console.error(`Pixabay API Error:`, data.error);
+				return [];
+			}
+
+			// Validate response structure
+			if (!data || typeof data !== 'object') {
+				console.error(`Invalid Pixabay response format`);
+				return [];
+			}
+
+			// Check for results
+			if (!data.hits || !Array.isArray(data.hits) || data.hits.length === 0) {
+				return [];
+			}
+
+			// Convert results to our format
+			const results = data.hits.map((hit: any) => ({
 				url: hit.webformatURL || hit.largeImageURL,
 				thumbnail: hit.previewURL,
-				width: hit.imageWidth,
-				height: hit.imageHeight,
+				width: hit.webformatWidth || hit.imageWidth,
+				height: hit.webformatHeight || hit.imageHeight,
 				source: 'Pixabay',
 				tags: hit.tags,
-				isCC0: true // Pixabay images are CC0
+				isCC0: true,
+				pixabayId: hit.id
 			}));
+
+			return results;
 		} catch (error) {
 			console.error('Pixabay search failed:', error);
 			return [];
@@ -162,13 +223,16 @@ export class ImageSearchService {
 
 	private filterImagesByQuality(images: SearchImage[]): SearchImage[] {
 		return images.filter(image => {
+			// Use more reasonable resolution requirement (max 300px to work with Pixabay previews)
+			const effectiveMinResolution = Math.min(this.settings.imageQuality.minResolution, 300);
+			
 			// Check minimum resolution
-			if (image.width < this.settings.imageQuality.minResolution || 
-				image.height < this.settings.imageQuality.minResolution) {
+			if (image.width < effectiveMinResolution || 
+				image.height < effectiveMinResolution) {
 				return false;
 			}
 
-			// Basic watermark detection (very simple heuristic)
+			// Watermark detection (disabled by default as it was too aggressive)
 			if (this.settings.imageQuality.detectWatermark) {
 				const suspiciousPatterns = ['getty', 'shutterstock', 'watermark', 'stock'];
 				const imageUrl = image.url.toLowerCase();

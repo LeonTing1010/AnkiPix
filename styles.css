@@ -63,12 +63,21 @@
 .ankipix-no-results, 
 .ankipix-error {
 	text-align: center;
-	padding: 40px;
-	color: var(--text-muted);
+	padding: 20px;
+	margin: 16px 0;
+	border-radius: 6px;
 }
 
 .ankipix-error {
 	color: var(--text-error);
+	background: var(--background-modifier-error);
+	border: 1px solid var(--background-modifier-error-border);
+}
+
+.ankipix-no-results {
+	background: var(--background-secondary);
+	color: var(--text-muted);
+	border: 1px dashed var(--background-modifier-border);
 }
 
 .ankipix-image-grid {
@@ -76,6 +85,7 @@
 	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 	gap: 12px;
 	margin-bottom: 20px;
+	min-height: 200px; /* Ensure grid has minimum height */
 }
 
 .ankipix-image-item {
@@ -85,6 +95,9 @@
 	cursor: pointer;
 	transition: all 0.2s ease;
 	background: var(--background-primary);
+	min-height: 150px; /* Ensure items have minimum height */
+	display: flex;
+	flex-direction: column;
 }
 
 .ankipix-image-item:hover {
@@ -101,10 +114,71 @@
 
 .ankipix-image-item img {
 	width: 100%;
-	height: 100px;
+	height: 120px;
 	object-fit: cover;
 	border-radius: 4px;
-	margin-bottom: 8px;
+	background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+	            linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+	            linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+	            linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+	background-size: 20px 20px;
+	background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+	border: 2px solid var(--background-modifier-border);
+	transition: all 0.2s ease;
+}
+
+.ankipix-image-item img:hover {
+	border-color: var(--interactive-accent);
+	transform: scale(1.02);
+}
+
+/* Loading state - show pattern background while image loads */
+.ankipix-image-item img[src=""] {
+	background: repeating-linear-gradient(
+		45deg,
+		#e0e0e0,
+		#e0e0e0 10px,
+		#f5f5f5 10px,
+		#f5f5f5 20px
+	);
+}
+
+/* Error state styling */
+.ankipix-image-error {
+	border: 2px solid var(--text-error) !important;
+	background: var(--background-modifier-error-hover);
+}
+
+.ankipix-image-error img {
+	border-color: var(--text-error);
+	background: repeating-linear-gradient(
+		45deg,
+		#ffe6e6,
+		#ffe6e6 10px,
+		#ffcccc 10px,
+		#ffcccc 20px
+	);
+	opacity: 0.7;
+}
+
+/* Success state - remove background pattern when loaded */
+.ankipix-image-item img[src]:not([src=""]) {
+	background: none;
+}
+
+/* Add a subtle pulse animation for loading items */
+@keyframes pulse-loading {
+	0% { opacity: 0.6; }
+	50% { opacity: 1; }
+	100% { opacity: 0.6; }
+}
+
+.ankipix-image-item:not(.loaded) {
+	animation: pulse-loading 2s infinite;
+}
+
+.ankipix-image-item.loaded {
+	animation: none;
 }
 
 .ankipix-image-info {
@@ -138,4 +212,134 @@
 .ankipix-cancel-button {
 	background: var(--background-secondary);
 	border: 1px solid var(--background-modifier-border);
+}
+
+/* Batch processing styles */
+.ankipix-summary-list {
+	background: var(--background-secondary);
+	border-radius: 6px;
+	padding: 16px;
+	margin: 16px 0;
+}
+
+.ankipix-summary-list li {
+	margin-bottom: 8px;
+	padding: 4px 0;
+}
+
+.ankipix-warning {
+	color: var(--text-warning);
+	background: var(--background-modifier-error);
+	padding: 12px;
+	border-radius: 6px;
+	margin: 16px 0;
+}
+
+.ankipix-progress {
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	padding: 12px;
+	margin: 16px 0;
+	text-align: center;
+	font-weight: 500;
+}
+
+.ankipix-back-button {
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-normal);
+}
+
+.ankipix-back-button:hover {
+	background: var(--background-modifier-hover);
+}
+
+/* Skip button styling */
+.ankipix-skip-button {
+	background: var(--interactive-accent-hover);
+	color: var(--text-on-accent);
+	border: none;
+	padding: 8px 16px;
+	border-radius: 4px;
+	cursor: pointer;
+	margin: 0 8px;
+}
+
+.ankipix-skip-button:hover {
+	background: var(--interactive-accent);
+}
+
+/* Custom search input styling */
+.ankipix-custom-search {
+	margin: 16px 0;
+	padding: 16px;
+	background: var(--background-secondary);
+	border-radius: 6px;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.ankipix-custom-search label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: 500;
+	color: var(--text-normal);
+}
+
+.ankipix-custom-input {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 14px;
+}
+
+.ankipix-custom-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+.ankipix-retry-button {
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-normal);
+	padding: 8px 16px;
+	border-radius: 4px;
+	cursor: pointer;
+	margin: 0 8px;
+}
+
+.ankipix-retry-button:hover {
+	background: var(--background-modifier-hover);
+}
+
+/* Anki Card Image Styles */
+.ankipix-anki-card-image {
+	max-width: 100%;
+	height: auto;
+}
+
+/* Donate Link Styles */
+.ankipix-donate {
+	margin-top: 2em;
+	text-align: center;
+}
+
+.ankipix-donate-link {
+	display: inline-block;
+	background: #f5f5f5;
+	color: #333;
+	border-radius: 6px;
+	padding: 0.5em 1.2em;
+	font-weight: bold;
+	text-decoration: none;
+	transition: background 0.2s;
+}
+
+.ankipix-donate-link:hover {
+	background: #ffd6e0;
+	color: #d72660;
 }

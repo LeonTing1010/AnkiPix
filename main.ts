@@ -41,9 +41,9 @@ const DEFAULT_SETTINGS: AnkiPixSettings = {
 		exam: true
 	},
 	imageQuality: {
-		minResolution: 600,
+		minResolution: 200,
 		preferCC0: true,
-		detectWatermark: true
+		detectWatermark: false
 	}
 };
 
@@ -86,6 +86,8 @@ export default class AnkiPixPlugin extends Plugin {
 				}
 			}
 		});
+
+
 
 		// Add settings tab
 		this.addSettingTab(new AnkiPixSettingsTab(this.app, this));
@@ -206,35 +208,15 @@ export default class AnkiPixPlugin extends Plugin {
 				return;
 			}
 
-			new Notice(`Processing ${listItems.length} items...`);
-
-			// Process each item
-			let successCount = 0;
-			for (const item of listItems) {
-				try {
-					const keywords = this.keywordExtractor.extractKeywords(item);
-					if (keywords.length > 0) {
-						const images = await this.imageSearchService.searchImages(keywords[0], 1);
-						if (images.length > 0) {
-							await this.ankiConnectService.createNote({
-								deckName: this.settings.ankiDeckName,
-								modelName: this.settings.noteType,
-								fields: {
-									[this.settings.frontField]: item,
-									[this.settings.backField]: `Image for: ${item}`,
-									[this.settings.imageField]: images[0].url
-								},
-								tags: ['ankipix', 'batch-generated']
-							});
-							successCount++;
-						}
-					}
-				} catch (error) {
-					console.error(`Error processing item "${item}":`, error);
-				}
-			}
-
-			new Notice(`Successfully created ${successCount}/${listItems.length} Anki cards`);
+			// Use ImageSearchModal for batch processing
+			new ImageSearchModal(
+				this.app,
+				listItems,
+				this.imageSearchService,
+				this.ankiConnectService,
+				this.settings,
+				listItems.join('\n')
+			).open();
 
 		} catch (error) {
 			console.error('Error in batch generation:', error);
